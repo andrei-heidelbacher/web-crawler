@@ -1,13 +1,13 @@
 package crawler
 
-import dispatch._
-import Defaults._
+import dispatch._, Defaults._
 //import scala.async.Async.{async, await}
 
 /**
  * @author andrei
  */
 object WebCrawler {
+  private val frontier = URLFrontier("")
   def main(args: Array[String]): Unit = {
     println("Started")
     val query = url("http://api.hostip.info/country.php")
