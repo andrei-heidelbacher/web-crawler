@@ -1,7 +1,6 @@
 package fetcher
 
 import org.scalatest._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -17,6 +16,7 @@ class PageFetcherTests extends FunSuite {
       "http://www.infoarena.ro/problema/text")
     val userAgent = "HHbot"
     val fetcher = PageFetcher(userAgent)
-    urls.foreach(p => println(Await.result(fetcher.fetch(p), 5.seconds)))
+    urls.foreach(p =>
+      println(Await.result(fetcher.fetch(p), 5.seconds).content))
   }
 }
