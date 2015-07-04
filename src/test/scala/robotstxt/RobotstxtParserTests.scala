@@ -1,7 +1,6 @@
 package robotstxt
 
 import org.scalatest._
-
 import scala.io.Source
 
 /**

@@ -44,7 +44,7 @@ object RobotstxtParser {
     "(?:\\n" + permissionType + " *: *" + path + ")"
   }
 
-  val permissionRegex: Regex = permissionString.r
+  private val permissionRegex: Regex = permissionString.r
 
   private def userAgentString(userAgent: String): String =
     "[uU][sS][eE][rR]-[aA][gG][eE][nN][tT] *: *" + userAgent
@@ -57,6 +57,6 @@ object RobotstxtParser {
       "(" + permissionString + "*)" +
       wildcardString
 
-  def contentRegex(userAgent: String): Regex =
+  private def contentRegex(userAgent: String): Regex =
     contentString(userAgent).r
 }
