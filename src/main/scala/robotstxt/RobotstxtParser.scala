@@ -37,21 +37,25 @@ object RobotstxtParser {
   def apply(userAgent: String) = new RobotstxtParser(userAgent)
 
   private val permissionString: String = {
-    val allow = "(?:a|A)(?:l|L)(?:l|L)(?:o|O)(?:w|W)"
-    val disallow = "(?:d|D)(?:i|I)(?:s|S)(?:a|A)(?:l|L)(?:l|L)(?:o|O)(?:w|W)"
+    val allow = "[aA][lL][lL][oO][wW]"
+    val disallow = "[dD][iI][sS]" + allow
     val permissionType = "(" + allow + "|" + disallow + ")"
     val path = "(.*)"
-    "(?:\\n" + permissionType + ": " + path + ")"
+    "(?:\\n" + permissionType + " *: *" + path + ")"
   }
 
   val permissionRegex: Regex = permissionString.r
 
   private def userAgentString(userAgent: String): String =
-    "(?:u|U)(?:s|S)(?:e|E)(?:r|R)-(?:a|A)(?:g|G)(?:e|E)(?:n|N)(?:t|T): " +
-      userAgent
+    "[uU][sS][eE][rR]-[aA][gG][eE][nN][tT] *: *" + userAgent
+
+  private val wildcardString = "[\\s\\S]*"
 
   private def contentString(userAgent: String): String =
-    ".*" + userAgentString(userAgent) + "(" + permissionString + "*).*"
+    wildcardString +
+      userAgentString(userAgent) +
+      "(" + permissionString + "*)" +
+      wildcardString
 
   def contentRegex(userAgent: String): Regex =
     contentString(userAgent).r

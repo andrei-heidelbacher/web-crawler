@@ -27,7 +27,6 @@ object RuleSet {
   def formatPattern(pattern: String): Regex = {
     val dollar = if (pattern.last == '$') "$" else ""
     val p = if (dollar == "$") pattern.dropRight(1) else pattern + "*"
-    println(p)
     ("\\Q" + p.split("\\*", -1).mkString("\\E.*\\Q") + "\\E" + dollar).r
   }
 

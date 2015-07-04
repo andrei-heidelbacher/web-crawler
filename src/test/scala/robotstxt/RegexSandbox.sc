@@ -22,3 +22,7 @@ val permissionRegex = {
   val path = "(.*)"
   ("(?:\\n" + permissionType + ": " + path + ")*").r
 }
+
+val pattern = " *asd *"
+val string = "    asd        "
+string.matches(pattern)
