@@ -8,13 +8,13 @@ import java.net.URL
 class Page(url: URL, val content: String) {
   val URL: String = url.toString
 
-  val host: String = url.getHost
+  def host: String = url.getHost
 
-  val path: String = url.getPath
+  def path: String = url.getPath
 
-  val port: Int = url.getPort
+  def port: Int = url.getPort
 
-  val protocol: String = url.getProtocol
+  def protocol: String = url.getProtocol
 
   val outlinks: Seq[String] = {
     val linkRegex = """href="([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*)"""".r

@@ -8,17 +8,13 @@ import scala.collection.mutable
 final class URLFrontier(initial: Traversable[String]) {
   private val queue = mutable.Queue.empty[String] ++ initial
 
-  def push(url: String): Unit = synchronized {
-    queue.enqueue(url)
-  }
+  def push(url: String): Unit = synchronized(queue.enqueue(url))
 
-  def pop(): String = synchronized {
-    queue.dequeue()
-  }
+  def pop(): String = synchronized(queue.dequeue())
 
-  def isEmpty: Boolean = synchronized {
-    queue.isEmpty
-  }
+  def isEmpty: Boolean = synchronized(queue.isEmpty)
+
+  def length: Int = synchronized(queue.length)
 }
 
 object URLFrontier {
