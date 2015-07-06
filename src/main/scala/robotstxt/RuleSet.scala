@@ -8,11 +8,11 @@ import scala.util.Try
  */
 final class RuleSet private (
     allowedPaths: Set[Regex],
-    dissalowedPaths: Set[Regex],
+    disallowedPaths: Set[Regex],
     crawlDelay: Double) {
   def isAllowed(path: String): Boolean =
     allowedPaths.exists(RuleSet.matchPattern(_, path)) ||
-      dissalowedPaths.forall(!RuleSet.matchPattern(_, path))
+      disallowedPaths.forall(!RuleSet.matchPattern(_, path))
 
   def isDisallowed(path: String): Boolean = !isAllowed(path)
 

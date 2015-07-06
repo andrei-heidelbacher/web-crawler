@@ -1046,12 +1046,13 @@ Disallow: /*q=
 Disallow: /*.atom
 Disallow: /login
 
-User-agent: HHbot
+User-agent  :  HHbot
 User-agent: SecondHHbot
 Crawl-delay: 1.5
-Allow:/*/*/tree/master
-Allow: /*/*/blob/master
-Disallow: /ekansa/Open-Context-Data
+# some comment here
+Allow:   /*/*/tree/master # coomment here
+Allow   : /*/*/blob/master   # annother commneign
+Disallow:  /ekansa/Open-Context-Data
 Disallow: /ekansa/opencontext-*
 Disallow: /*/*/pulse
 Disallow: /*/*/tree/*
@@ -1097,8 +1098,9 @@ Disallow: /*/*/compare/
 Disallow: /*/*/cache/
 Disallow: /*.git
 Disallow: /*.git/
-Disallow: /search/advanced
-Disallow: /search
+Disallow: /search/advanced #asdiunadf  #2340982# # l
+# adinf
+Disallow: /search #asdiunadf  #2340982# # l
 Disallow: /*q=
 Disallow: /*.atom
 Disallow: /login

@@ -26,10 +26,12 @@ final class RobotstxtParser(agentName: String) {
     .flatMap(g => g.headOption)
     .map(getRulesFromDirectives)
 
-  def getRules(content: String): RuleSet =
+  def getRules(rawContent: String): RuleSet = {
+    val content = rawContent.replaceAll("[\\s ]#.*", "")
     getRulesWithUserAgent(agentName, content)
       .orElse(getRulesWithUserAgent("\\*", content))
       .getOrElse(RuleSet(Nil, Nil, Nil))
+  }
 }
 
 object RobotstxtParser {
@@ -42,10 +44,10 @@ object RobotstxtParser {
   val disallow = """[dD][iI][sS]""" + allow
   val crawlDelay = """[cC][rR][aA][wW][lL]-[dD][eE][lL][aA][yY]"""
   val supported = Seq(allow, disallow, crawlDelay, ".*")
-  val directive = "(?:\\s(" + supported.mkString("|") + ") ?: ?" + link + ")"
+  val directive = "(?:\\s(" + supported.mkString("|") + ") *: *" + link + " *)"
 
   private def userAgentString(agentName: String): String =
-    userAgent + " ?: ?" + agentName
+    userAgent + " *: *" + agentName + " *"
 
   private def content(agentName: String): String =
     wildcard + userAgentString(agentName) + "(" + directive + "*)" + wildcard

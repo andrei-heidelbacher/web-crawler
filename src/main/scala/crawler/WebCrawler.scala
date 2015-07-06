@@ -12,7 +12,9 @@ import scala.util.Try
  * @author andrei
  */
 object WebCrawler {
-  val userAgent: String = "HHbot"
+  val agentName: String = "HHbot"
+  val userAgentString: String = agentName +
+    " https://github.com/andrei-heidelbacher/web-crawler"
 
   def main(args: Array[String]): Unit = {
     val args = Array[String]("history.txt", "http://www.dmoz.org/")
@@ -20,7 +22,7 @@ object WebCrawler {
       fileName <- Try(args(0))
       frontier <- Try(URLFrontier(args.tail))
     } {
-      val fetcher = PageFetcher(userAgent)
+      val fetcher = PageFetcher(userAgentString)
       val writer = new PrintWriter(new File(fileName))
       var count = 0
       while (!frontier.isEmpty && count < 100) {
