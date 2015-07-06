@@ -1,7 +1,7 @@
 package crawler
 
 import fetcher._
-import java.io.{File, PrintWriter}
+import java.io.{FileOutputStream, File, PrintWriter}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
@@ -31,6 +31,11 @@ object WebCrawler {
           writer.println(p.URL)
           p.outlinks.foreach(frontier.push)
           println(frontier.length)
+          if (url.endsWith(".ico")) {
+            val image = new FileOutputStream("img.ico")
+            image.write(p.content)
+            image.close()
+          }
           count += 1
         }
         /*page.onComplete {

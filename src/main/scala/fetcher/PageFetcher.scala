@@ -12,7 +12,7 @@ class PageFetcher(userAgent: String, followRedirects: Boolean, timeout: Int) {
     val http = Http.configure {
       _.setFollowRedirects(true).setConnectionTimeoutInMs(timeout)
     }
-    http(query OK as.String).map(content => Page(urlString, content))
+    http(query OK as.Bytes).map(content => Page(urlString, content))
   }
 
   def fetch(url: URL): Future[Page] = fetch(url.toString)
