@@ -1,62 +1,52 @@
 package robotstxt
 
-import scala.util.matching.Regex
-
 /**
  * @author andrei
  */
-final class RobotstxtParser(userAgent: String) {
-  private def getRulesFromPermissions(content: String): RuleSet = {
-    val permissions =
-      RobotstxtParser.permissionRegex.findAllIn(content).toSeq.map({
-        case RobotstxtParser.permissionRegex(access, path) => (access, path)
-      })
-    val (allow, disallow) =
-      permissions.foldLeft((List[String](), List[String]()))({
-        case ((a, d), (access, path)) =>
-          if (access.toLowerCase == "allow") (path :: a, d) else (a, path :: d)
-      })
-    RuleSet(allow, disallow)
+final class RobotstxtParser(agentName: String) {
+  private def getRulesFromDirectives(content: String): RuleSet = {
+    val directiveRegex = RobotstxtParser.directive.r
+    val directives = directiveRegex.findAllIn(content).toSeq.flatMap({
+      case directiveRegex(directive, subject) => RobotstxtParser.supported
+        .filter(directive.matches)
+        .map(d => (d, subject))
+    }).groupBy({ case (directive, subject) => directive })
+      .mapValues(_.map({ case (k, v) => v }))
+    val allow = directives.getOrElse(RobotstxtParser.allow, Nil)
+    val disallow = directives.getOrElse(RobotstxtParser.disallow, Nil)
+    val crawlDelay = directives.getOrElse(RobotstxtParser.crawlDelay, Nil)
+    RuleSet(allow, disallow, crawlDelay)
   }
 
   private def getRulesWithUserAgent(
       agentName: String,
       content: String): Option[RuleSet] = RobotstxtParser
-    .contentRegex(agentName)
+    .content(agentName).r
     .unapplySeq(content)
     .flatMap(g => g.headOption)
-    .map(getRulesFromPermissions)
+    .map(getRulesFromDirectives)
 
   def getRules(content: String): RuleSet =
-    getRulesWithUserAgent(userAgent, content)
+    getRulesWithUserAgent(agentName, content)
       .orElse(getRulesWithUserAgent("\\*", content))
-      .getOrElse(RuleSet(Nil, Nil))
+      .getOrElse(RuleSet(Nil, Nil, Nil))
 }
 
 object RobotstxtParser {
   def apply(userAgent: String) = new RobotstxtParser(userAgent)
 
-  private val permissionString: String = {
-    val allow = "[aA][lL][lL][oO][wW]"
-    val disallow = "[dD][iI][sS]" + allow
-    val permissionType = "(" + allow + "|" + disallow + ")"
-    val path = "(.*)"
-    "(?:\\n" + permissionType + " *: *" + path + ")"
-  }
+  val wildcard = """[\s\S]*"""
+  val link = """([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*)"""
+  val userAgent = """[uU][sS][eE][rR]-[aA][gG][eE][nN][tT]"""
+  val allow = """[aA][lL][lL][oO][wW]"""
+  val disallow = """[dD][iI][sS]""" + allow
+  val crawlDelay = """[cC][rR][aA][wW][lL]-[dD][eE][lL][aA][yY]"""
+  val supported = Seq(allow, disallow, crawlDelay, ".*")
+  val directive = "(?:\\s(" + supported.mkString("|") + ") ?: ?" + link + ")"
 
-  private val permissionRegex: Regex = permissionString.r
+  private def userAgentString(agentName: String): String =
+    userAgent + " ?: ?" + agentName
 
-  private def userAgentString(userAgent: String): String =
-    "[uU][sS][eE][rR]-[aA][gG][eE][nN][tT] *: *" + userAgent
-
-  private val wildcardString = "[\\s\\S]*"
-
-  private def contentString(userAgent: String): String =
-    wildcardString +
-      userAgentString(userAgent) +
-      "(" + permissionString + "*)" +
-      wildcardString
-
-  private def contentRegex(userAgent: String): Regex =
-    contentString(userAgent).r
+  private def content(agentName: String): String =
+    wildcard + userAgentString(agentName) + "(" + directive + "*)" + wildcard
 }

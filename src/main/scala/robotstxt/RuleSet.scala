@@ -1,26 +1,38 @@
 package robotstxt
 
 import scala.util.matching.Regex
+import scala.util.Try
 
 /**
  * @author andrei
  */
 final class RuleSet private (
     allowedPaths: Set[Regex],
-    dissalowedPaths: Set[Regex]) {
+    dissalowedPaths: Set[Regex],
+    crawlDelay: Double) {
   def isAllowed(path: String): Boolean =
     allowedPaths.exists(RuleSet.matchPattern(_, path)) ||
       dissalowedPaths.forall(!RuleSet.matchPattern(_, path))
 
   def isDisallowed(path: String): Boolean = !isAllowed(path)
+
+  def delay: Double = crawlDelay
 }
 
 object RuleSet {
   def apply(
       allow: Traversable[String],
-      dissalow: Traversable[String]): RuleSet = new RuleSet(
-    allow.toSet.filter(validPattern).map(formatPattern),
-    dissalow.toSet.filter(validPattern).map(formatPattern))
+      dissalow: Traversable[String],
+      crawlDelay: Traversable[String]): RuleSet = {
+    val delay = Try {
+      assert(crawlDelay.size == 1)
+      crawlDelay.head.toDouble
+    }
+    new RuleSet(
+      allow.toSet.filter(validPattern).map(formatPattern),
+      dissalow.toSet.filter(validPattern).map(formatPattern),
+      delay.getOrElse(0.0))
+  }
 
   def validPattern(pattern: String): Boolean = pattern.nonEmpty
 

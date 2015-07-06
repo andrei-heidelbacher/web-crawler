@@ -11,7 +11,7 @@ class RuleSetTests extends FunSuite {
     val disallowed = Seq("/asd", "abc",
       "/infoarena/problem?user=a_h1926&score=100")
     val allowed = Seq("was", "k", "/infoarena/problem?user=a_h1926&score=90")
-    val rules = RuleSet(Nil, patterns)
+    val rules = RuleSet(Nil, patterns, Nil)
     assert(disallowed.forall(p => rules.isDisallowed(p)))
     assert(allowed.forall(p => rules.isAllowed(p)))
   }

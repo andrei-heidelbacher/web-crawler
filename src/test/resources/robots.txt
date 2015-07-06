@@ -1047,11 +1047,13 @@ Disallow: /*.atom
 Disallow: /login
 
 User-agent: HHbot
+User-agent: SecondHHbot
+Crawl-delay: 1.5
 Allow:/*/*/tree/master
-Allow    :    /*/*/blob/master
-Disallow   :/ekansa/Open-Context-Data
-Disallow   :   /ekansa/opencontext-*
-Disallow : /*/*/pulse
+Allow: /*/*/blob/master
+Disallow: /ekansa/Open-Context-Data
+Disallow: /ekansa/opencontext-*
+Disallow: /*/*/pulse
 Disallow: /*/*/tree/*
 Disallow: /*/*/blob/*
 Disallow: /*/*/wiki/*/*
@@ -1068,7 +1070,7 @@ Disallow: /*/*/commits/*?author
 Disallow: /*/*/commits/*?path
 Disallow: /*/*/branches
 Disallow: /*/*/tags
-Disallow   :    /*/*/contributors
+Disallow: /*/*/contributors
 Disallow: /*/*/comments
 Disallow: /*/*/stargazers
 Disallow: /*/*/search
