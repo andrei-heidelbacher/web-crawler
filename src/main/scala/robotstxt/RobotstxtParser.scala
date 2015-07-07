@@ -3,7 +3,7 @@ package robotstxt
 /**
  * @author andrei
  */
-final class RobotstxtParser(agentName: String) {
+final class RobotstxtParser(val agentName: String) {
   private def getRulesFromDirectives(content: String): RuleSet = {
     val directiveRegex = RobotstxtParser.directive.r
     val directives = directiveRegex.findAllIn(content).toSeq.flatMap({
@@ -18,25 +18,26 @@ final class RobotstxtParser(agentName: String) {
     RuleSet(allow, disallow, crawlDelay)
   }
 
-  private def getRulesWithUserAgent(
-      agentName: String,
+  private def getRulesForUserAgent(
+      userAgent: String,
       content: String): Option[RuleSet] = RobotstxtParser
-    .content(agentName).r
+    .content(userAgent).r
     .unapplySeq(content)
     .flatMap(g => g.headOption)
     .map(getRulesFromDirectives)
 
   def getRules(rawContent: String): RuleSet = {
-    val content = rawContent.replaceAll("[\\s ]#.*", "")
-    getRulesWithUserAgent(agentName, content)
-      .orElse(getRulesWithUserAgent("\\*", content))
+    val content = rawContent.replaceAll(RobotstxtParser.comment, "")
+    getRulesForUserAgent(agentName, content)
+      .orElse(getRulesForUserAgent("\\*", content))
       .getOrElse(RuleSet(Nil, Nil, Nil))
   }
 }
 
 object RobotstxtParser {
-  def apply(userAgent: String) = new RobotstxtParser(userAgent)
+  def apply(agentName: String) = new RobotstxtParser(agentName)
 
+  val comment = """[\s ]#.*"""
   val wildcard = """[\s\S]*"""
   val link = """([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*)"""
   val userAgent = """[uU][sS][eE][rR]-[aA][gG][eE][nN][tT]"""
@@ -46,9 +47,9 @@ object RobotstxtParser {
   val supported = Seq(allow, disallow, crawlDelay, ".*")
   val directive = "(?:\\s(" + supported.mkString("|") + ") *: *" + link + " *)"
 
-  private def userAgentString(agentName: String): String =
+  def userAgentDirective(agentName: String): String =
     userAgent + " *: *" + agentName + " *"
 
-  private def content(agentName: String): String =
-    wildcard + userAgentString(agentName) + "(" + directive + "*)" + wildcard
+  def content(agentName: String): String =
+    wildcard + userAgentDirective(agentName) + "(" + directive + "*)" + wildcard
 }

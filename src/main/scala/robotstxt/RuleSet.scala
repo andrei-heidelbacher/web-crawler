@@ -1,18 +1,19 @@
 package robotstxt
 
-import scala.util.matching.Regex
 import scala.util.Try
 
 /**
  * @author andrei
  */
 final class RuleSet private (
-    allowedPaths: Set[Regex],
-    disallowedPaths: Set[Regex],
+    allowedPaths: Set[Pattern],
+    disallowedPaths: Set[Pattern],
     crawlDelay: Double) {
-  def isAllowed(path: String): Boolean =
-    allowedPaths.exists(RuleSet.matchPattern(_, path)) ||
-      disallowedPaths.forall(!RuleSet.matchPattern(_, path))
+  def isAllowed(path: String): Boolean = {
+    val allowed = allowedPaths.find(_.matches(path)).map(_.priority)
+    val disallowed = disallowedPaths.find(_.matches(path)).map(_.priority)
+    allowed.getOrElse(-1) >= disallowed.getOrElse(-1)
+  }
 
   def isDisallowed(path: String): Boolean = !isAllowed(path)
 
@@ -22,28 +23,28 @@ final class RuleSet private (
 object RuleSet {
   def apply(
       allow: Traversable[String],
-      dissalow: Traversable[String],
+      disallow: Traversable[String],
+      crawlDelay: Double = 0.0): RuleSet = new RuleSet(
+    allow.toSet.filter(Pattern.valid).map(p => Pattern(p)),
+    disallow.toSet.filter(Pattern.valid).map(p => Pattern(p)),
+    crawlDelay)
+
+  def apply(
+      allow: Traversable[String],
+      disallow: Traversable[String],
+      crawlDelay: String): RuleSet = {
+    val delay = Try(crawlDelay.toDouble)
+    RuleSet(allow, disallow, delay.getOrElse(0.0))
+  }
+
+  def apply(
+      allow: Traversable[String],
+      disallow: Traversable[String],
       crawlDelay: Traversable[String]): RuleSet = {
     val delay = Try {
       assert(crawlDelay.size == 1)
       crawlDelay.head.toDouble
     }
-    new RuleSet(
-      allow.toSet.filter(validPattern).map(formatPattern),
-      dissalow.toSet.filter(validPattern).map(formatPattern),
-      delay.getOrElse(0.0))
-  }
-
-  def validPattern(pattern: String): Boolean = pattern.nonEmpty
-
-  def formatPattern(pattern: String): Regex = {
-    val dollar = if (pattern.last == '$') "$" else ""
-    val p = if (dollar == "$") pattern.dropRight(1) else pattern + "*"
-    ("\\Q" + p.split("\\*", -1).mkString("\\E.*\\Q") + "\\E" + dollar).r
-  }
-
-  def matchPattern(pattern: Regex, string: String): Boolean = string match {
-    case pattern(_*) => true
-    case _ => false
+    RuleSet(allow, disallow, delay.getOrElse(0.0))
   }
 }
