@@ -9,11 +9,14 @@ import java.net.URL
 final case class PageFetcher(
     userAgent: String,
     followRedirects: Boolean = true,
-    timeout: Int = 5000) {
+    connectionTimeout: Int = 3000,
+    requestTimeout: Int = 10000) {
   def fetch(urlString: String): Future[Page] = {
     val query = url(urlString).addHeader("User-Agent", userAgent)
     val http = Http.configure {
-      _.setFollowRedirects(followRedirects).setConnectionTimeoutInMs(timeout)
+      _.setFollowRedirects(followRedirects)
+        .setConnectionTimeoutInMs(connectionTimeout)
+        .setRequestTimeoutInMs(requestTimeout)
     }
     http(query OK as.Bytes).map(content => Page(urlString, content))
   }

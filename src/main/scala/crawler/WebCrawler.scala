@@ -26,24 +26,27 @@ object WebCrawler {
       val fetcher = PageFetcher(userAgentString)
       val writer = new PrintWriter(new File(fileName))
       var count = 0
+      var success = 0
       while (count < 1000) {
         if (!frontier.isEmpty) {
           val url = frontier.pop()
           val page = fetcher.fetch(url)
-          println(url)
+          count += 1
+          println(count + ": " + url)
           page.onComplete {
             case Success(p) =>
+              println(p.url + " success!")
               p.outlinks.foreach(frontier.push)
               writer.println(p.url)
               writer.flush()
-              count += 1
+              success += 1
             case _ =>
               println("Failed!")
           }
         }
       }
       writer.close()
-      println("Finished!")
+      println("Finished! Success: " + success)
     }
   }
 }
