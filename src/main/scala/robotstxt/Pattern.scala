@@ -5,7 +5,8 @@ import scala.util.matching.Regex
 /**
  * @author andrei
  */
-final case class Pattern(regex: Regex, priority: Int) extends Ordered[Pattern] {
+final case class Pattern private(regex: Regex, priority: Int)
+  extends Ordered[Pattern] {
   def matches(string: String): Boolean = string match {
     case regex(_*) => true
     case _ => false
@@ -25,6 +26,4 @@ object Pattern {
     val priority = pattern.length
     Pattern(regex, priority)
   }
-
-  def valid(pattern: String): Boolean = pattern.nonEmpty
 }

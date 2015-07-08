@@ -1,7 +1,5 @@
 package robotstxt
 
-import scala.util.Try
-
 /**
  * @author andrei
  */
@@ -25,26 +23,7 @@ object RuleSet {
       allow: Traversable[String],
       disallow: Traversable[String],
       crawlDelay: Double = 0.0): RuleSet = new RuleSet(
-    allow.toSet.filter(Pattern.valid).map(p => Pattern(p)),
-    disallow.toSet.filter(Pattern.valid).map(p => Pattern(p)),
-    crawlDelay)
-
-  def apply(
-      allow: Traversable[String],
-      disallow: Traversable[String],
-      crawlDelay: String): RuleSet = {
-    val delay = Try(crawlDelay.toDouble)
-    RuleSet(allow, disallow, delay.getOrElse(0.0))
-  }
-
-  def apply(
-      allow: Traversable[String],
-      disallow: Traversable[String],
-      crawlDelay: Traversable[String]): RuleSet = {
-    val delay = Try {
-      assert(crawlDelay.size == 1)
-      crawlDelay.head.toDouble
-    }
-    RuleSet(allow, disallow, delay.getOrElse(0.0))
-  }
+    allow.toSet[String].map(p => Pattern(p)),
+    disallow.toSet[String].map(p => Pattern(p)),
+    Math.max(crawlDelay, 0.0))
 }

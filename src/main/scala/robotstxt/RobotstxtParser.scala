@@ -1,5 +1,7 @@
 package robotstxt
 
+import scala.util.Try
+
 /**
  * @author andrei
  */
@@ -10,12 +12,15 @@ final class RobotstxtParser(val agentName: String) {
       case directiveRegex(directive, subject) => RobotstxtParser.supported
         .filter(directive.matches)
         .map(d => (d, subject))
-    }).groupBy({ case (directive, subject) => directive })
+    }).filter({ case (directive, subject) => subject.nonEmpty })
+      .groupBy({ case (directive, subject) => directive })
       .mapValues(_.map({ case (k, v) => v }))
     val allow = directives.getOrElse(RobotstxtParser.allow, Nil)
     val disallow = directives.getOrElse(RobotstxtParser.disallow, Nil)
-    val crawlDelay = directives.getOrElse(RobotstxtParser.crawlDelay, Nil)
-    RuleSet(allow, disallow, crawlDelay)
+    val crawlDelay = Try {
+      directives(RobotstxtParser.crawlDelay).map(_.toDouble).min
+    }
+    RuleSet(allow, disallow, crawlDelay.getOrElse(0.0))
   }
 
   private def getRulesForUserAgent(
@@ -30,7 +35,7 @@ final class RobotstxtParser(val agentName: String) {
     val content = rawContent.replaceAll(RobotstxtParser.comment, "")
     getRulesForUserAgent(agentName, content)
       .orElse(getRulesForUserAgent("\\*", content))
-      .getOrElse(RuleSet(Nil, Nil, Nil))
+      .getOrElse(RuleSet(Nil, Nil, 0.0))
   }
 }
 
