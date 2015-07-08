@@ -2,11 +2,12 @@ package crawler
 
 import fetcher._
 import java.io.{File, PrintWriter}
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.util.Try
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Try, Success}
 
 //import scala.async.Async.{async, await}
+//import scala.concurrent.Await
+//import scala.concurrent.duration._
 
 /**
  * @author andrei
@@ -25,29 +26,24 @@ object WebCrawler {
       val fetcher = PageFetcher(userAgentString)
       val writer = new PrintWriter(new File(fileName))
       var count = 0
-      while (!frontier.isEmpty && count < 100) {
-        val url = frontier.pop()
-        val page = fetcher.fetch(url)
-        println(url)
-        for (p <- Try(Await.result(page, 5.seconds))) {
-          writer.println(p.URL)
-          p.outlinks.foreach(frontier.push)
-          println(frontier.length)
-          count += 1
+      while (count < 1000) {
+        if (!frontier.isEmpty) {
+          val url = frontier.pop()
+          val page = fetcher.fetch(url)
+          println(url)
+          page.onComplete {
+            case Success(p) =>
+              p.outlinks.foreach(frontier.push)
+              writer.println(p.url)
+              writer.flush()
+              count += 1
+            case _ =>
+              println("Failed!")
+          }
         }
-        /*page.onComplete {
-          case Success(p) =>
-            writer.println(p.URL)
-            p.outlinks.foreach(frontier.push)
-            println(frontier.length)
-            count += 1
-          case _ =>
-            println("Failed!")
-        }*/
-        //Await.result(page, 5.seconds)
-        println(count)
       }
       writer.close()
+      println("Finished!")
     }
   }
 }
