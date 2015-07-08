@@ -26,4 +26,6 @@ object RuleSet {
     allow.toSet[String].map(p => Pattern(p)),
     disallow.toSet[String].map(p => Pattern(p)),
     Math.max(crawlDelay, 0.0))
+
+  def empty: RuleSet = RuleSet(Nil, Nil, 0.0)
 }

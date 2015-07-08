@@ -35,7 +35,7 @@ final class RobotstxtParser(val agentName: String) {
     val content = rawContent.replaceAll(RobotstxtParser.comment, "")
     getRulesForUserAgent(agentName, content)
       .orElse(getRulesForUserAgent("\\*", content))
-      .getOrElse(RuleSet(Nil, Nil, 0.0))
+      .getOrElse(RuleSet.empty)
   }
 }
 
