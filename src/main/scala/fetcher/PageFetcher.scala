@@ -9,9 +9,9 @@ import java.net.URL
  */
 final case class PageFetcher(
     userAgent: String,
-    followRedirects: Boolean = true,
-    connectionTimeout: Int = 3000,
-    requestTimeout: Int = 10000) {
+    followRedirects: Boolean,
+    connectionTimeout: Int,
+    requestTimeout: Int) {
   private val http = Http.configure {
     _.setFollowRedirects(followRedirects)
       .setConnectionTimeoutInMs(connectionTimeout)
@@ -21,7 +21,7 @@ final case class PageFetcher(
   def fetch(urlString: String): Future[Page] = {
     val page = Try {
       val query = url(urlString).addHeader("User-Agent", userAgent)
-      http(query OK as.Bytes).map(content => Page(urlString, content))
+      http(query OK as.Bytes).map(content => Page(new URL(urlString), content))
     }
     page match {
       case Success(p) => p

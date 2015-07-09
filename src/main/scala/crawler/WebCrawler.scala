@@ -2,7 +2,7 @@ package crawler
 
 import fetcher._
 import java.io.{File, PrintWriter}
-import rx.lang.scala.{Subscription, Observable}
+import rx.lang.scala.Observable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Try, Success}
 
@@ -10,34 +10,32 @@ import scala.util.{Try, Success}
  * @author andrei
  */
 object WebCrawler {
-  val userAgent = {
-    val agentName: String = "HHbot"
-    val userAgentString: String = agentName +
-      " https://github.com/andrei-heidelbacher/web-crawler"
-    UserAgent(agentName, userAgentString)
-  }
-
-  val fetcher = PageFetcher(userAgent.userAgentString)
-
-  def crawl(initial: Traversable[String]): Observable[Page] = {
-    Observable.create[Page]({ logger =>
-      val frontier = URLFrontier(userAgent, initial)
+  def crawl(configuration: CrawlConfiguration)
+           (initial: Traversable[String]): Observable[(String, Try[Page])] = {
+    Observable[(String, Try[Page])](subscriber => {
+      val fetcher = PageFetcher(
+        configuration.userAgentString,
+        configuration.followRedirects,
+        configuration.connectionTimeout,
+        configuration.requestTimeout)
+      val frontier = URLFrontier(configuration, initial)
       var count = 0
-      while (count < 1000) {
+      while (count < 1000 && !subscriber.isUnsubscribed) {
         if (!frontier.isEmpty) {
           val url = frontier.pop()
           val page = fetcher.fetch(url)
           count += 1
-          page.onComplete {
-            case Success(p) =>
-              logger.onNext(p)
-              p.outlinks.foreach(frontier.tryPush)
-            case _ => ()
-          }
+          page.onComplete(result => {
+            subscriber.onNext(url -> result)
+            result match {
+              case Success(p) =>
+                p.outlinks.foreach(frontier.tryPush)
+              case _ => ()
+            }
+          })
         }
       }
-      logger.onCompleted()
-      Subscription {}
+      subscriber.onCompleted()
     })
   }
 
@@ -48,15 +46,23 @@ object WebCrawler {
       initial <- Try(args.tail)
     } {
       val writer = new PrintWriter(new File(fileName))
-      val pageStream = crawl(initial)
-      val logger = pageStream.subscribe { page =>
-        println(page.url)
-        writer.println(page.url)
-        writer.flush()
-      }
-      logger.unsubscribe()
-      writer.close()
-      println("Finished!")
+      val configuration = CrawlConfiguration(
+        "HHbot",
+        "HHbot https://github.com/andrei-heidelbacher/web-crawler",
+        true,
+        3000,
+        10000,
+        url => true)
+      val pageStream = crawl(configuration)(initial)
+      val logger = pageStream.subscribe(_ match {
+        case (link, Success(page)) =>
+          println(link)
+          writer.println(link)
+          writer.flush()
+        case _ => ()
+      })
+      //writer.close()
+      //println("Finished!")
     }
   }
 }

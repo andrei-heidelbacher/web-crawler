@@ -10,12 +10,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 class PageTests extends FunSuite {
   test("Sample page") {
+    val follow = true
     val userAgent = "HHbot"
-    val fetcher = PageFetcher(userAgent)
+    val fetcher = PageFetcher(userAgent, follow, 3000, 10000)
     val url = "https://github.com"
     val page = fetcher.fetch(url)
     for (p <- page) {
-      println(p.url)
+      println(p.url.toString)
       println(p.content)
       println(p.outlinks)
     }

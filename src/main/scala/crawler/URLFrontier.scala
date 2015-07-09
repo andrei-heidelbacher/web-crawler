@@ -1,22 +1,30 @@
 package crawler
 
 import scala.collection.mutable
-import scala.concurrent.Await
+/*import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
 import java.net.URL
 import robotstxt._
-import fetcher._
+import fetcher._*/
 
 /**
  * @author andrei
  */
-final class URLFrontier(userAgent: UserAgent, initial: Traversable[String]) {
+final class URLFrontier(
+    configuration: CrawlConfiguration,
+    initial: Traversable[String]) {
   private val maximumSize = 500
-  private val fetcher = PageFetcher(userAgent.userAgentString)
-  private val robotsParser = RobotstxtParser(userAgent.agentName)
-  private val rules = mutable.Map[String, RuleSet]()
-  private val queue = mutable.Set.empty[String] ++ initial
+  /*private val fetcher = PageFetcher(
+    configuration.userAgentString,
+    configuration.followRedirects,
+    configuration.connectionTimeout,
+    configuration.requestTimeout)
+  private val robotsParser = RobotstxtParser(configuration.agentName)
+  private val rules = mutable.Map[String, RuleSet]()*/
+  private val queue = mutable.Set.empty[String]
+
+  initial.filter(configuration.urlFilter).foreach(tryPush)
 
   def push(url: String): Unit = synchronized {
     /*val host = Try(new URL(url).getHost)
@@ -40,7 +48,8 @@ final class URLFrontier(userAgent: UserAgent, initial: Traversable[String]) {
   def tryPush(url: String): Unit = synchronized {
     while (queue.size >= maximumSize)
       queue -= queue.head
-    queue += url
+    if (configuration.urlFilter(url))
+      queue += url
   }
 
   def pop(): String = synchronized {
@@ -55,9 +64,11 @@ final class URLFrontier(userAgent: UserAgent, initial: Traversable[String]) {
 }
 
 object URLFrontier {
-  def apply(userAgent: UserAgent, initial: String*): URLFrontier =
-    new URLFrontier(userAgent, initial)
+  def apply(configuration: CrawlConfiguration, initial: String*): URLFrontier =
+    new URLFrontier(configuration, initial)
 
-  def apply(userAgent: UserAgent, initial: Traversable[String]): URLFrontier =
-    new URLFrontier(userAgent, initial)
+  def apply(
+      configuration: CrawlConfiguration,
+      initial: Traversable[String]): URLFrontier =
+    new URLFrontier(configuration, initial)
 }
