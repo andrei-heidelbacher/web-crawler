@@ -9,7 +9,8 @@ final case class CrawlConfiguration(
     followRedirects: Boolean,
     connectionTimeout: Int,
     requestTimeout: Int,
-    urlFilter: String => Boolean) {
+    urlFilter: String => Boolean,
+    crawlLimit: Long) {
   require(userAgentString.startsWith(agentName))
   require(connectionTimeout > 0)
   require(requestTimeout > 0)

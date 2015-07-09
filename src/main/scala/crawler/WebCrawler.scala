@@ -2,9 +2,12 @@ package crawler
 
 import fetcher._
 import java.io.{File, PrintWriter}
-import rx.lang.scala.Observable
+import java.util.concurrent.atomic.AtomicInteger
+import rx.lang.scala.{Observer, Observable}
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Try, Success}
+import scala.util.{Try, Success, Failure}
 
 /**
  * @author andrei
@@ -19,22 +22,24 @@ object WebCrawler {
         configuration.connectionTimeout,
         configuration.requestTimeout)
       val frontier = URLFrontier(configuration, initial)
-      var count = 0
-      while (count < 1000 && !subscriber.isUnsubscribed) {
+      val processing = new AtomicInteger(0)
+      var crawled = 0L
+      while (!subscriber.isUnsubscribed &&
+        crawled < configuration.crawlLimit &&
+        (processing.get > 0 || !frontier.isEmpty)) {
         if (!frontier.isEmpty) {
+          crawled += 1
+          processing.incrementAndGet()
           val url = frontier.pop()
-          val page = fetcher.fetch(url)
-          count += 1
-          page.onComplete(result => {
-            subscriber.onNext(url -> result)
-            result match {
-              case Success(p) =>
-                p.outlinks.foreach(frontier.tryPush)
-              case _ => ()
-            }
+          val page = url.flatMap(fetcher.fetch)
+          page.onComplete(p => {
+            subscriber.onNext(Await.result(url, Duration.Inf) -> p)
+            p.map(_.outlinks).foreach(_.foreach(frontier.tryPush))
+            processing.decrementAndGet()
           })
         }
       }
+      while (!subscriber.isUnsubscribed && processing.get > 0) {}
       subscriber.onCompleted()
     })
   }
@@ -49,20 +54,31 @@ object WebCrawler {
       val configuration = CrawlConfiguration(
         "HHbot",
         "HHbot https://github.com/andrei-heidelbacher/web-crawler",
-        true,
+        0 == 0,
         3000,
-        10000,
-        url => true)
+        5000,
+        url => true,
+        1000)
       val pageStream = crawl(configuration)(initial)
-      val logger = pageStream.subscribe(_ match {
-        case (link, Success(page)) =>
-          println(link)
-          writer.println(link)
-          writer.flush()
-        case _ => ()
-      })
-      //writer.close()
-      //println("Finished!")
+
+      val onNext: ((String, Try[Page])) => Unit = { result =>
+        result match {
+          case (link, Success(page)) =>
+            println("Successfully fetched " + link)
+            writer.println(link)
+            writer.flush()
+          case (link, Failure(t)) =>
+            println("Failed to fetch " + link + " because " + t.getMessage)
+        }
+      }
+
+      val onCompleted: () => Unit = { () =>
+        writer.close()
+        println("Finished!")
+      }
+
+      val logger = Observer[(String, Try[Page])](onNext, onCompleted)
+      pageStream.subscribe(logger)
     }
   }
 }

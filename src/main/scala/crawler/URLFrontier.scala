@@ -1,8 +1,9 @@
 package crawler
 
 import scala.collection.mutable
-/*import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
+/*import scala.concurrent.duration._
 import scala.util.Try
 import java.net.URL
 import robotstxt._
@@ -52,10 +53,10 @@ final class URLFrontier(
       queue += url
   }
 
-  def pop(): String = synchronized {
+  def pop(): Future[String] = synchronized {
     val link = queue.head
     queue -= link
-    link
+    Future.successful(link)
   }
 
   def isEmpty: Boolean = synchronized(queue.isEmpty)
