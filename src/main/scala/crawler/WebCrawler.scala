@@ -55,8 +55,8 @@ object WebCrawler {
         "HHbot",
         "HHbot https://github.com/andrei-heidelbacher/web-crawler",
         0 == 0,
-        3000,
         5000,
+        20000,
         url => true,
         1000)
       val pageStream = crawl(configuration)(initial)

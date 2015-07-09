@@ -1,13 +1,14 @@
 package crawler
 
+import scala.collection.concurrent
 import scala.collection.mutable
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
-/*import scala.concurrent.duration._
+import scala.concurrent.duration._
 import scala.util.Try
 import java.net.URL
 import robotstxt._
-import fetcher._*/
+import fetcher._
 
 /**
  * @author andrei
@@ -15,46 +16,48 @@ import fetcher._*/
 final class URLFrontier(
     configuration: CrawlConfiguration,
     initial: Traversable[String]) {
-  private val maximumSize = 500
-  /*private val fetcher = PageFetcher(
+  private val maximumSize = 100000
+  private val fetcher = PageFetcher(
     configuration.userAgentString,
     configuration.followRedirects,
     configuration.connectionTimeout,
     configuration.requestTimeout)
-  private val robotsParser = RobotstxtParser(configuration.agentName)
-  private val rules = mutable.Map[String, RuleSet]()*/
-  private val queue = mutable.Set.empty[String]
+  private val parser = RobotstxtParser(configuration.agentName)
+  private val rules = concurrent.TrieMap[String, RuleSet]()
+  private val queue = concurrent.TrieMap[String, Unit]()
 
-  initial.filter(configuration.urlFilter).foreach(tryPush)
+  initial.foreach(tryPush)
 
-  def push(url: String): Unit = synchronized {
-    /*val host = Try(new URL(url).getHost)
-    for {
-      h <- host
-      if !rules.contains(h)
-      link = h + "/robots.txt"
-      robots <- Try(Await.result(fetcher.fetch(link), Duration.Inf))
-    } {
-      rules += (h -> robotsParser.getRules(new String(robots.content, "UTF-8")))
-    }
-    val allowed = for {
-      h <- host
-      r <- Try(rules(h))
-    } yield r.isAllowed(h)
-    if (allowed.getOrElse(true))*/
-      queue += url
-    //else println("Rejected " + url)
+  private def push(url: String): Unit = synchronized {
+    while (queue.size >= maximumSize)
+      queue -= queue.head._1
+    queue += url -> ()
   }
 
-  def tryPush(url: String): Unit = synchronized {
-    while (queue.size >= maximumSize)
-      queue -= queue.head
-    if (configuration.urlFilter(url))
-      queue += url
+  def tryPush(urlString: String): Unit = {
+    if (configuration.urlFilter(urlString)) {
+      for {
+        url <- Try(new URL(urlString))
+        if !rules.contains(url.getHost)
+        link = url.getProtocol + "://" + url.getHost + "/robots.txt"
+        robots = Try(Await.result(fetcher.fetch(link), Duration.Inf))
+        content = robots.map(_.content).getOrElse(Array[Byte]())
+      } {
+        rules += (url.getHost -> parser.getRules(new String(content, "UTF-8")))
+      }
+      val allowed = (for {
+        host <- Try(new URL(urlString).getHost)
+        ruleSet <- Try(rules(host))
+      } yield ruleSet.isAllowed(urlString)).getOrElse(true)
+      if (allowed)
+        push(urlString)
+      else
+        println("Rejected access by robots.txt to " + urlString)
+    }
   }
 
   def pop(): Future[String] = synchronized {
-    val link = queue.head
+    val link = queue.head._1
     queue -= link
     Future.successful(link)
   }
