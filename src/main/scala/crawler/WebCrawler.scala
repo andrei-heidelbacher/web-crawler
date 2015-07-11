@@ -25,8 +25,7 @@ object WebCrawler {
       val processing = new AtomicInteger(0)
       var crawled = 0L
       while (!subscriber.isUnsubscribed &&
-        crawled < configuration.crawlLimit &&
-        (processing.get > 0 || !frontier.isEmpty)) {
+        crawled < configuration.crawlLimit) {
         if (!frontier.isEmpty) {
           crawled += 1
           processing.incrementAndGet()
@@ -58,7 +57,8 @@ object WebCrawler {
         5000,
         20000,
         url => true,
-        1000)
+        1000,
+        1024 * 1)
       val pageStream = crawl(configuration)(initial)
 
       val onNext: ((String, Try[Page])) => Unit = { result =>

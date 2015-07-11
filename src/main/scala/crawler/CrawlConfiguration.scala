@@ -10,8 +10,10 @@ final case class CrawlConfiguration(
     connectionTimeout: Int,
     requestTimeout: Int,
     urlFilter: String => Boolean,
-    crawlLimit: Long) {
+    crawlLimit: Long,
+    maxRobotsSize: Long) {
   require(userAgentString.startsWith(agentName))
   require(connectionTimeout > 0)
   require(requestTimeout > 0)
+  require(maxRobotsSize > 0)
 }
