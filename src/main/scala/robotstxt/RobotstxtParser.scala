@@ -42,19 +42,22 @@ final class RobotstxtParser(val agentName: String) {
 object RobotstxtParser {
   def apply(agentName: String) = new RobotstxtParser(agentName)
 
-  val comment = """[\s ]#.*"""
+  val comment = """[\s ]#.*+"""
   val wildcard = """[\s\S]*"""
-  val link = """([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*)"""
+  val value = """([\w\Q-.~:/?#[]@!$&'()*+,;=\E]*+)"""
   val userAgent = """[uU][sS][eE][rR]-[aA][gG][eE][nN][tT]"""
   val allow = """[aA][lL][lL][oO][wW]"""
   val disallow = """[dD][iI][sS]""" + allow
   val crawlDelay = """[cC][rR][aA][wW][lL]-[dD][eE][lL][aA][yY]"""
-  val supported = Seq(allow, disallow, crawlDelay, ".*")
-  val directive = "(?:\\s(" + supported.mkString("|") + ") *: *" + link + " *)"
+  val supported = Seq(allow, disallow, crawlDelay, "[^: ]*+")
+  val directive =
+    "(?:\\s(" + supported.mkString("|") + ") *+: *+" + value + " *+)"
 
   def userAgentDirective(agentName: String): String =
-    userAgent + " *: *" + agentName + " *"
+    userAgent + " *+: *+" + agentName + " *+"
 
   def content(agentName: String): String =
-    wildcard + userAgentDirective(agentName) + "(" + directive + "*)" + wildcard
+    wildcard +
+      userAgentDirective(agentName) + "(" + directive + "*+)" +
+      wildcard
 }

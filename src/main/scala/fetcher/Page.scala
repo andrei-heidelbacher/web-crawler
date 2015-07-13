@@ -2,19 +2,20 @@ package fetcher
 
 import java.net.URL
 
+import scala.util.Try
+
 /**
  * @author andrei
  */
 final case class Page(url: URL, content: Array[Byte]) {
-  val outlinks: Seq[String] = {
+  val outlinks: Seq[URL] = {
     val contentAsString = new String(content, "UTF-8")
-    val linkRegex = """href="([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*)"""".r
-    linkRegex.findAllIn(contentAsString).matchData.map(matchedLink => {
-      val link = matchedLink.group(1)
-      if (!link.startsWith("http"))
-        url.toString + (if (link.startsWith("/")) "" else "/") + link
-      else
-        link
-    }).toList
+    val linkRegex = """href="([\w\d\Q-._~:/?#[]@!$&'()*+,;=\E]*+)"""".r
+    linkRegex.findAllIn(contentAsString).matchData
+      .map(link => link.group(1))
+      .toList.flatMap(link => Try(new URL(link))
+        .orElse(Try(new URL(url.toString + link)))
+        .orElse(Try(new URL(url.toString + "/" + link)))
+        .toOption)
   }
 }

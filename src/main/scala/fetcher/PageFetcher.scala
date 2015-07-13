@@ -1,8 +1,10 @@
 package fetcher
 
 import dispatch._, Defaults._
-import scala.util.{Try, Success, Failure}
+
 import java.net.URL
+
+import scala.util.{Failure, Success, Try}
 
 /**
  * @author andrei
@@ -10,12 +12,12 @@ import java.net.URL
 final case class PageFetcher(
     userAgent: String,
     followRedirects: Boolean,
-    connectionTimeout: Int,
-    requestTimeout: Int) {
+    connectionTimeoutInMs: Int,
+    requestTimeoutInMs: Int) {
   private val http = Http.configure {
     _.setFollowRedirects(followRedirects)
-      .setConnectionTimeoutInMs(connectionTimeout)
-      .setRequestTimeoutInMs(requestTimeout)
+      .setConnectionTimeoutInMs(connectionTimeoutInMs)
+      .setRequestTimeoutInMs(requestTimeoutInMs)
   }
 
   def fetch(urlString: String): Future[Page] = {

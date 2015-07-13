@@ -1,5 +1,7 @@
 package crawler
 
+import java.net.URL
+
 /**
  * @author andrei
  */
@@ -7,13 +9,13 @@ final case class CrawlConfiguration(
     agentName: String,
     userAgentString: String,
     followRedirects: Boolean,
-    connectionTimeout: Int,
-    requestTimeout: Int,
-    urlFilter: String => Boolean,
+    connectionTimeoutInMs: Int,
+    requestTimeoutInMs: Int,
+    urlFilter: URL => Boolean,
     crawlLimit: Long,
     maxRobotsSize: Long) {
   require(userAgentString.startsWith(agentName))
-  require(connectionTimeout > 0)
-  require(requestTimeout > 0)
+  require(connectionTimeoutInMs > 0)
+  require(requestTimeoutInMs > 0)
   require(maxRobotsSize > 0)
 }

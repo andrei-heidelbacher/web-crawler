@@ -22,7 +22,7 @@ object Pattern {
     val dollar = if (pattern.last == '$') "$" else ""
     val p = if (dollar == "$") pattern.dropRight(1) else pattern + "*"
     val regex =
-      ("\\Q" + p.split("\\*", -1).mkString("\\E.*\\Q") + "\\E" + dollar).r
+      ("\\Q" + p.split("\\*", -1).mkString("\\E.*?\\Q") + "\\E" + dollar).r
     val priority = pattern.length
     Pattern(regex, priority)
   }
