@@ -18,8 +18,8 @@ object DefaultRunner extends Runner {
     "HHbot",
     "HHbot https://github.com/andrei-heidelbacher/web-crawler",
     0 == 0,
-    3000,
-    10000,
+    5000,
+    20000,
     500,
     url => true,
     1024 * 256,
@@ -47,7 +47,7 @@ object DefaultRunner extends Runner {
   }
 
   def main(args: Array[String]): Unit = {
-    val args = Array[String]("history.txt", "http://www.gsp.ro/")
+    val args = Array[String]("history.txt", "http://www.reddit.com/")
     for {
       fileName <- Try(args(0))
       initial <- Try(args.tail.map(new URL(_)))

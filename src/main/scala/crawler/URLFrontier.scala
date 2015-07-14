@@ -43,8 +43,9 @@ final class URLFrontier(
     }
   }
 
-  private val MaximumHistorySize = 1000000
-  private val MaximumHostQueueSize = 100000
+  private val MaximumHistorySize = 10000000
+  private val MaximumHostCount = 10000
+  private val MaximumHostSize = 100
 
   private val fetcher = PageFetcher(
     configuration.userAgentString,
@@ -62,11 +63,11 @@ final class URLFrontier(
 
   initial.foreach(tryPush)
 
-  private def pushHost(host: String): Unit = {
+  private def pushHost(host: String): Unit = synchronized {
+    while (hostQueue.size >= MaximumHostCount)
+      hostURLs -= hostQueue.remove()
     hostURLs += host -> collection.mutable.Queue[URL]()
     hostQueue.add(host)
-    while (hostQueue.size >= MaximumHostQueueSize)
-      hostQueue.remove()
   }
 
   private def push(url: URL): Unit = synchronized {
@@ -75,7 +76,10 @@ final class URLFrontier(
     history += url -> Unit
     if (!hostURLs.contains(url.getHost))
       pushHost(url.getHost)
-    hostURLs.get(url.getHost).get.enqueue(url)
+    val urlQueue = hostURLs.get(url.getHost).get
+    while (urlQueue.size >= MaximumHostSize)
+      urlQueue.dequeue()
+    urlQueue.enqueue(url)
     logger.log("Enqueued " + url)
   }
 
@@ -128,6 +132,8 @@ final class URLFrontier(
     val url = urlQueue.dequeue()
     if (urlQueue.isEmpty)
       hostURLs -= host
+    else
+      hostQueue.add(host)
     logger.log("Dequeued " + url)
     val crawlDelay = configuration.minCrawlDelayInMs.milliseconds
       .max(rules.getOrElse(host, RuleSet.empty).delayInMs.milliseconds)
