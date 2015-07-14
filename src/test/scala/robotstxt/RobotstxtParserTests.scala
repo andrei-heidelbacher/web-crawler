@@ -36,6 +36,6 @@ class RobotstxtParserTests extends FunSuite {
     )
     assert(allowed.forall(rules.isAllowed))
     assert(disallowed.forall(rules.isDisallowed))
-    assert(rules.delay == 1.5)
+    assert(rules.delayInMs == 1500)
   }
 }

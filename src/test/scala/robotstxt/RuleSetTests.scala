@@ -14,6 +14,6 @@ class RuleSetTests extends FunSuite {
     val rules = RuleSet(Nil, patterns)
     assert(disallowed.forall(p => rules.isDisallowed(p)))
     assert(allowed.forall(p => rules.isAllowed(p)))
-    assert(rules.delay == 0.0)
+    assert(rules.delayInMs == 0)
   }
 }

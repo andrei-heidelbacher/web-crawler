@@ -1,10 +1,13 @@
 package crawler
 
+import java.util.concurrent.ConcurrentLinkedQueue
+
 import fetcher._
 import robotstxt._
 
 import java.io.PrintWriter
 import java.net.URL
+import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.concurrent
 import scala.concurrent._
@@ -18,8 +21,31 @@ import scala.util.{Success, Try}
 final class URLFrontier(
     configuration: CrawlConfiguration,
     initial: Traversable[URL]) {
-  private val maximumHistorySize = 1000000
-  private val maximumSize = 100000
+  private final class Logger(fileName: String) {
+    private val printer = new PrintWriter(fileName)
+
+    private def timeNow: String = {
+      import java.util.Calendar
+
+      val now = Calendar.getInstance
+      val year = now.get(Calendar.YEAR)
+      val month = now.get(Calendar.MONTH) + 1
+      val day = now.get(Calendar.DAY_OF_MONTH)
+      val hour = now.get(Calendar.HOUR_OF_DAY)
+      val minute = now.get(Calendar.MINUTE)
+      val second = now.get(Calendar.SECOND)
+      f"$year%d-$month%02d-$day%02d $hour%02d:$minute%02d:$second%02d"
+    }
+
+    def log(message: String) = synchronized {
+      printer.println(timeNow + ": " + message)
+      printer.flush()
+    }
+  }
+
+  private val MaximumHistorySize = 1000000
+  private val MaximumHostQueueSize = 100000
+
   private val fetcher = PageFetcher(
     configuration.userAgentString,
     configuration.followRedirects,
@@ -27,23 +53,33 @@ final class URLFrontier(
     configuration.requestTimeoutInMs)
   private val parser = RobotstxtParser(configuration.agentName)
   private val rules = concurrent.TrieMap[String, RuleSet]()
-  private val queue = concurrent.TrieMap[URL, Unit]()
+  private val hostURLs =
+    concurrent.TrieMap[String, collection.mutable.Queue[URL]]()
+  private val hostQueue = new ConcurrentLinkedQueue[String]()
   private val history = concurrent.TrieMap[URL, Unit]()
-  private val logger = new PrintWriter("logs.log")
+  private val working = new AtomicLong(0L)
+  private val logger = new Logger(configuration.logFileName)
 
   initial.foreach(tryPush)
 
-  private def push(url: URL): Unit = synchronized {
-    while (history.size >= maximumHistorySize)
-      history -= history.head._1
-    history += url -> ()
-    while (queue.size >= maximumSize)
-      queue -= queue.head._1
-    queue += url -> ()
-    logger.println("Enqueued " + url)
+  private def pushHost(host: String): Unit = {
+    hostURLs += host -> collection.mutable.Queue[URL]()
+    hostQueue.add(host)
+    while (hostQueue.size >= MaximumHostQueueSize)
+      hostQueue.remove()
   }
 
-  private def fetchRobots(url: URL): Future[RuleSet] = Future {
+  private def push(url: URL): Unit = synchronized {
+    while (history.size >= MaximumHistorySize)
+      history -= history.head._1
+    history += url -> Unit
+    if (!hostURLs.contains(url.getHost))
+      pushHost(url.getHost)
+    hostURLs.get(url.getHost).get.enqueue(url)
+    logger.log("Enqueued " + url)
+  }
+
+  private def fetchRobotstxt(url: URL): Future[RuleSet] = Future {
     val link = url.getProtocol + "://" + url.getHost + "/robots.txt"
     val robots = Try(Await.result(fetcher.fetch(link), Duration.Inf))
     val byteContent = robots.map(_.content).getOrElse(Array[Byte]())
@@ -59,10 +95,10 @@ final class URLFrontier(
       false
     else {
       if (!rules.contains(url.getHost)) {
-        fetchRobots(url).onComplete {
+        fetchRobotstxt(url).onComplete {
           case Success(ruleSet) =>
             rules += (url.getHost -> ruleSet)
-            synchronized(logger.println("Got robots for " + url.getHost))
+            logger.log("Got robots for " + url.getHost)
           case _ => ()
         }
       }
@@ -74,28 +110,33 @@ final class URLFrontier(
   }
 
   def tryPush(url: URL): Unit = {
+    working.incrementAndGet()
     isAllowed(url).onComplete {
       case Success(allowed) =>
         if (allowed)
           push(url)
         else
-          synchronized(logger.println("Access denied by REP to " + url))
-      case _ => ()
+          logger.log("Access denied by REP or previously visited " + url)
+        working.decrementAndGet()
+      case _ => working.decrementAndGet()
     }
   }
 
   def pop(): Future[URL] = synchronized {
-    val link = queue.head._1
-    queue -= link
-    logger.println("Dequeued " + link)
-    URLFrontier.delay(
-      link,
-      rules.getOrElse(link.getHost, RuleSet.empty).delay.seconds)
+    val host = hostQueue.remove()
+    val urlQueue = hostURLs.get(host).get
+    val url = urlQueue.dequeue()
+    if (urlQueue.isEmpty)
+      hostURLs -= host
+    logger.log("Dequeued " + url)
+    val crawlDelay = configuration.minCrawlDelayInMs.milliseconds
+      .max(rules.getOrElse(host, RuleSet.empty).delayInMs.milliseconds)
+    URLFrontier.delay(url, crawlDelay)
   }
 
-  def isEmpty: Boolean = queue.isEmpty
+  def isEmpty: Boolean = hostQueue.isEmpty
 
-  def size: Int = queue.size
+  def isIdle: Boolean = working.get == 0L
 }
 
 object URLFrontier {

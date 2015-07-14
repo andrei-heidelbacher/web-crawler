@@ -15,7 +15,7 @@ final class RuleSet private (
 
   def isDisallowed(path: String): Boolean = !isAllowed(path)
 
-  def delay: Double = crawlDelay
+  def delayInMs: Int = (1000 * crawlDelay).toInt
 }
 
 object RuleSet {
