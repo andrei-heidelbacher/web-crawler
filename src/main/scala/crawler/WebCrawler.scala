@@ -2,6 +2,7 @@ package crawler
 
 import rx.lang.scala.Observable
 
+import crawler.frontier.URLFrontier
 import fetcher._
 
 import java.net.URL
