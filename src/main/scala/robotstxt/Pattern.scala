@@ -5,7 +5,7 @@ import scala.util.matching.Regex
 /**
  * @author andrei
  */
-final case class Pattern private(regex: Regex, priority: Int)
+final case class Pattern private (regex: Regex, priority: Int)
   extends Ordered[Pattern] {
   def matches(string: String): Boolean = string match {
     case regex(_*) => true

@@ -3,7 +3,7 @@ package runner
 import crawler._
 import fetcher._
 
-import java.io.{File, PrintWriter}
+import java.io.PrintWriter
 import java.net.URL
 
 import scala.util.{Failure, Success, Try}
@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
  * @author andrei
  */
 object DefaultRunner extends Runner {
-  var writer: PrintWriter = new PrintWriter("history.txt")
+  private val writer = new PrintWriter("history.log")
 
   def configuration: CrawlConfiguration = CrawlConfiguration(
     "HHbot",
@@ -21,10 +21,15 @@ object DefaultRunner extends Runner {
     5000,
     20000,
     500,
-    url => true,
+    url => {
+      !url.toString.matches(".*\\.(css|png|jpg|pdf|json|ico)")
+    },
     1024 * 256,
-    "logs.log",
-    500)
+    10000,
+    10000,
+    1000,
+    1000000,
+    10000)
 
   def process(result: (URL, Try[Page])): Unit = {
     result match {
@@ -47,12 +52,12 @@ object DefaultRunner extends Runner {
   }
 
   def main(args: Array[String]): Unit = {
-    val args = Array[String]("history.txt", "http://www.reddit.com/")
-    for {
-      fileName <- Try(args(0))
-      initial <- Try(args.tail.map(new URL(_)))
-    } {
-      writer = new PrintWriter(new File(fileName))
+    val args = Array[String](
+      "http://www.gsp.ro",
+      "http://www.reddit.com",
+      "http://www.wikipedia.org",
+      "http://www.twitter.com")
+    for (initial <- Try(args.tail.map(new URL(_)))) {
       run(initial)
     }
   }

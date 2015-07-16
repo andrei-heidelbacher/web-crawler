@@ -1,5 +1,7 @@
 package crawler.frontier
 
+import crawler.CrawlConfiguration
+
 import java.net.URL
 
 import scala.collection._
@@ -7,17 +9,14 @@ import scala.collection._
 /**
  * @author andrei
  */
-final class HostQueue {
-  private val MaximumHostCount = 10000
-  private val MaximumHostSize = 10000
-
-  private val hostURLs = mutable.Map[String, mutable.Queue[URL]]()
-  private val hosts = mutable.Queue[String]()
+final class HostQueue private (maxBreadth: Int, maxDepth: Int) {
+  private val hostURLs = mutable.Map.empty[String, mutable.Queue[URL]]
+  private val hosts = mutable.Queue.empty[String]
 
   private def pushHost(host: String): Unit = synchronized {
-    while (hosts.size >= MaximumHostCount)
+    while (hosts.size >= maxBreadth)
       hostURLs -= hosts.dequeue()
-    hostURLs += host -> mutable.Queue[URL]()
+    hostURLs += host -> mutable.Queue.empty[URL]
     hosts.enqueue(host)
   }
 
@@ -25,7 +24,7 @@ final class HostQueue {
     if (!hostURLs.contains(url.getHost))
       pushHost(url.getHost)
     val urlQueue = hostURLs.get(url.getHost).get
-    while (urlQueue.size >= MaximumHostSize)
+    while (urlQueue.size >= maxDepth)
       urlQueue.dequeue()
     urlQueue.enqueue(url)
   }
@@ -45,17 +44,6 @@ final class HostQueue {
 }
 
 object HostQueue {
-  def apply(urls: URL*): HostQueue = {
-    val queue = empty
-    urls.foreach(queue.pushURL)
-    queue
-  }
-
-  def apply(urls: Traversable[URL]): HostQueue = {
-    val queue = empty
-    urls.foreach(queue.pushURL)
-    queue
-  }
-
-  def empty: HostQueue = new HostQueue
+  def apply(configuration: CrawlConfiguration): HostQueue =
+    new HostQueue(configuration.maxHostBreadth, configuration.maxHostDepth)
 }

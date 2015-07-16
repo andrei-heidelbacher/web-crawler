@@ -20,10 +20,10 @@ trait Runner {
 
   def onCompleted(): Unit
 
-  final def run(initial: Traversable[URL]): Subscription = {
-    val pageStream = WebCrawler.crawl(configuration)(initial)
+  final def run(seeds: Traversable[URL]): Subscription = {
+    val pageStream = WebCrawler.crawl(configuration, seeds)
     pageStream.subscribe(process, onError, onCompleted)
   }
 
-  final def run(initial: URL*): Subscription = run(initial.toList)
+  final def run(seeds: URL*): Subscription = run(seeds.toList)
 }

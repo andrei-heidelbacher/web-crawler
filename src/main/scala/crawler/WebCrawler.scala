@@ -7,20 +7,25 @@ import fetcher._
 
 import java.net.URL
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.Executors
 
-import scala.concurrent.Await
+import scala.concurrent.{ExecutionContext, Await}
 import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
 /**
  * @author andrei
  */
 object WebCrawler {
-  def crawl(configuration: CrawlConfiguration)
-           (initial: Traversable[URL]): Observable[(URL, Try[Page])] = {
+  implicit val executionContext =
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1000))
+    //scala.concurrent.ExecutionContext.Implicits.global
+
+  def crawl(
+      configuration: CrawlConfiguration,
+      seeds: Traversable[URL]): Observable[(URL, Try[Page])] = {
     Observable[(URL, Try[Page])](subscriber => {
-      val frontier = URLFrontier(configuration, initial)
+      val frontier = URLFrontier(configuration, seeds)
       val fetcher = PageFetcher(
         configuration.userAgentString,
         configuration.followRedirects,

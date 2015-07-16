@@ -13,12 +13,20 @@ final case class CrawlConfiguration(
     requestTimeoutInMs: Int,
     minCrawlDelayInMs: Int,
     urlFilter: URL => Boolean,
-    maxRobotsSize: Long,
-    logFileName: String,
+    maxRobotsSize: Int,
+    maxRobotsHistory: Int,
+    maxHostBreadth: Int,
+    maxHostDepth: Int,
+    maxHistorySize: Int,
     crawlLimit: Long) {
   require(userAgentString.startsWith(agentName))
   require(connectionTimeoutInMs > 0)
   require(requestTimeoutInMs > 0)
   require(minCrawlDelayInMs > 0)
   require(maxRobotsSize > 0)
+  require(maxRobotsHistory > 0)
+  require(maxHostBreadth > 0)
+  require (maxHostDepth > 0)
+  require(maxHistorySize > 0)
+  require(crawlLimit > 0)
 }
