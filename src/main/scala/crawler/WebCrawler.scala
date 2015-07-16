@@ -9,7 +9,7 @@ import java.net.URL
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.Executors
 
-import scala.concurrent.{ExecutionContext, Await}
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 

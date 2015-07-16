@@ -15,21 +15,22 @@ object DefaultRunner extends Runner {
   private val writer = new PrintWriter("history.log")
 
   def configuration: CrawlConfiguration = CrawlConfiguration(
-    "HHbot",
-    "HHbot https://github.com/andrei-heidelbacher/web-crawler",
-    0 == 0,
-    5000,
-    20000,
-    500,
-    url => {
+    agentName = "HHbot",
+    userAgentString = "HHbot" +
+    " (https://github.com/andrei-heidelbacher/web-crawler)",
+    followRedirects = true,
+    connectionTimeoutInMs = 5000,
+    requestTimeoutInMs = 20000,
+    minCrawlDelayInMs = 500,
+    URLFilter = url => {
       !url.toString.matches(".*\\.(css|png|jpg|pdf|json|ico)")
     },
-    1024 * 256,
-    10000,
-    10000,
-    1000,
-    1000000,
-    10000)
+    maxRobotsSize = 1024 * 256,
+    maxRobotsHistory = 10000,
+    maxHostBreadth = 10000,
+    maxHostDepth = 1000,
+    maxHistorySize = 1000000,
+    crawlLimit = 10000L)
 
   def process(result: (URL, Try[Page])): Unit = {
     result match {
@@ -57,7 +58,7 @@ object DefaultRunner extends Runner {
       "http://www.reddit.com",
       "http://www.wikipedia.org",
       "http://www.twitter.com")
-    for (initial <- Try(args.tail.map(new URL(_)))) {
+    for (initial <- Try(args.map(new URL(_)))) {
       run(initial)
     }
   }

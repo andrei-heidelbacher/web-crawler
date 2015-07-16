@@ -2,7 +2,7 @@ package crawler.frontier
 
 import crawler.CrawlConfiguration
 
-import java.net.{URL, URI}
+import java.net.{URI, URL}
 
 import scala.collection._
 import scala.util.Try

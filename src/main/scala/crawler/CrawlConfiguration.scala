@@ -12,7 +12,7 @@ final case class CrawlConfiguration(
     connectionTimeoutInMs: Int,
     requestTimeoutInMs: Int,
     minCrawlDelayInMs: Int,
-    urlFilter: URL => Boolean,
+    URLFilter: URL => Boolean,
     maxRobotsSize: Int,
     maxRobotsHistory: Int,
     maxHostBreadth: Int,

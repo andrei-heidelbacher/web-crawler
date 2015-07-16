@@ -29,7 +29,7 @@ final class URLFrontier(
   }
 
   def tryPush(url: URL): Unit = {
-    if (configuration.urlFilter(url) && !history.contains(url)) {
+    if (configuration.URLFilter(url) && !history.contains(url)) {
       working.incrementAndGet()
       robots.isAllowed(url).onComplete {
         case Success(allowed) =>
