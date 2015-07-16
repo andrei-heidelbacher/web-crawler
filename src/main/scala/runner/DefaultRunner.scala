@@ -17,7 +17,7 @@ object DefaultRunner extends Runner {
   def configuration: CrawlConfiguration = CrawlConfiguration(
     agentName = "HHbot",
     userAgentString = "HHbot" +
-    " (https://github.com/andrei-heidelbacher/web-crawler)",
+      " (https://github.com/andrei-heidelbacher/web-crawler)",
     followRedirects = true,
     connectionTimeoutInMs = 5000,
     requestTimeoutInMs = 20000,
