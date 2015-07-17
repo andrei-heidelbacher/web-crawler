@@ -7,6 +7,15 @@ import java.net.URL
 import scala.util.{Failure, Success, Try}
 
 /**
+ * Sends http requests and fetches web pages at given URLs.
+ *
+ * @param userAgent User-agent string to use when making http requests
+ * @param followRedirects Whether the fetcher should follow URL redirects or not
+ * @param connectionTimeoutInMs Time in milliseconds to wait for establishing
+ * a connection before throwing a timeout exception
+ * @param requestTimeoutInMs Time in milliseconds to wait for receiving the http
+ * response before throwing a timeout exception
+ *
  * @author andrei
  */
 final case class PageFetcher(
@@ -14,12 +23,19 @@ final case class PageFetcher(
     followRedirects: Boolean,
     connectionTimeoutInMs: Int,
     requestTimeoutInMs: Int) {
+  /**
+   * Configured HTTP object that sends the requests.
+   */
   private val http = Http.configure {
     _.setFollowRedirects(followRedirects)
       .setConnectionTimeoutInMs(connectionTimeoutInMs)
       .setRequestTimeoutInMs(requestTimeoutInMs)
   }
 
+  /**
+   * @param urlString URL to fetch
+   * @return Future containing the fetched page or encountered exceptions
+   */
   def fetch(urlString: String): Future[Page] = {
     val page = Try {
       val query = url(urlString).addHeader("User-Agent", userAgent)
@@ -31,5 +47,9 @@ final case class PageFetcher(
     }
   }
 
+  /**
+   * @param url URL to fetch
+   * @return Future containing the fetched page or encountered exceptions
+   */
   def fetch(url: URL): Future[Page] = fetch(url.toString)
 }
