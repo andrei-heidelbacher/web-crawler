@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.duration._
-import scala.util.{Success, Try}
+import scala.util.Try
 
 /**
  * @author andrei
@@ -31,13 +31,10 @@ final class URLFrontier(
   def tryPush(url: URL): Unit = {
     if (configuration.URLFilter(url) && !history.contains(url)) {
       working.incrementAndGet()
-      robots.isAllowed(url).onComplete {
-        case Success(allowed) =>
-          if (allowed)
-            push(url)
-          working.decrementAndGet()
-        case _ => working.decrementAndGet()
-      }
+      robots.isAllowed(url).onComplete(allowed => {
+        allowed.foreach { if (_) push(url) }
+        working.decrementAndGet()
+      })
     }
   }
 

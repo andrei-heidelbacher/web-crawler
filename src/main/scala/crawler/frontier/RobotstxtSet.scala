@@ -8,9 +8,7 @@ import robotstxt.{RobotstxtParser, RuleSet}
 import java.net.URL
 
 import scala.collection.concurrent
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
-import scala.util.Try
+import scala.concurrent.Future
 
 /**
  * @author andrei
@@ -33,16 +31,13 @@ final class RobotstxtSet private (
 
   private def fetchRobotstxt(url: URL): Future[RuleSet] = synchronized {
     rules += url.getHost -> RuleSet.empty
-    Future {
-      val link = url.getProtocol + "://" + url.getHost + "/robots.txt"
-      val robots = Try(Await.result(fetcher.fetch(link), Duration.Inf))
-      val byteContent = robots.map(_.content).getOrElse(Array[Byte]())
-      val content = new String(byteContent, "UTF-8")
-      if (byteContent.length <= maxRobotsSize)
-        Try(parser.getRules(content)).getOrElse(RuleSet.empty)
-      else
-        RuleSet.empty
-    }
+    val link = url.getProtocol + "://" + url.getHost + "/robots.txt"
+    for {
+      robots <- fetcher.fetch(link)
+      byteContent = robots.content
+      if byteContent.length <= maxRobotsSize
+      content = new String(byteContent, "UTF-8")
+    } yield parser.getRules(content)
   }
 
   private def ruleSet(url: URL): Future[RuleSet] = {
