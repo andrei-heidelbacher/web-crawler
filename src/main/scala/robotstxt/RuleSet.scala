@@ -1,11 +1,11 @@
 package robotstxt
 
 /**
- * Set containing all rules in a robots.txt. Supports the '''Allow''',
- * '''Disallow''', '''Crawl-delay''' directives. If there are patterns that
- * both explicitly allow and explicitly disallow a path, the one with greater
- * priority is applied (the priority is equal to the length of the
- * originating path pattern from the robots.txt file).
+ * Set containing all rules in a robots.txt. Supports the `Allow`, `Disallow`,
+ * `Crawl-delay` directives. If there are patterns that both explicitly allow
+ * and explicitly disallow a path, the one with greater priority is applied
+ * (the priority is equal to the length of the originating path pattern from
+ * the robots.txt file).
  *
  * @param allowedPaths Set of explicitly allowed patterns
  * @param disallowedPaths Set of explicitly disallowed patterns

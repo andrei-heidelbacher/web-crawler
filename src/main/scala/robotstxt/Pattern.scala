@@ -4,7 +4,7 @@ import scala.util.matching.Regex
 
 /**
  * Pattern that matches relative URLs in robots.txt files. It supports the
- * wildcard '''*''' and the end-of-string '''$'''.
+ * wildcard `*` and the end-of-string `$`.
  *
  * @param regex Regular expression that describes the pattern
  * @param priority Priority of the Pattern (equal to the length of the
@@ -23,8 +23,8 @@ final case class Pattern private (regex: Regex, priority: Int)
   }
 
   /**
-   * Compares the priorities of '''this''' and '''that''', and in case of
-   * equality, lexicographically compares the associated regexes.
+   * Compares the priorities of `this` and `that`, and in case of equality,
+   * lexicographically compares the associated regexes.
    */
   def compare(that: Pattern): Int =
     if (priority != that.priority) -priority.compare(that.priority)
@@ -38,8 +38,8 @@ final case class Pattern private (regex: Regex, priority: Int)
  */
 object Pattern {
   /**
-   * Builds pattern from given string. All characters except '''*''' and a
-   * single '''$''' at the end of the string are escaped.
+   * Builds pattern from given string. All characters except `*` and a single
+   * `$` at the end of the string are escaped.
    */
   def apply(pattern: String): Pattern = {
     val dollar = if (pattern.last == '$') "$" else ""

@@ -9,6 +9,10 @@ import java.net.URL
 import scala.util.{Failure, Success, Try}
 
 /**
+ * Default implementation for the [[crawler.Runner]] interface. Logs the
+ * successfully fetched pages in `history.log` and prints to the standard
+ * output all fetch attempts (successful or failed).
+ *
  * @author andrei
  */
 object DefaultRunner extends Runner {

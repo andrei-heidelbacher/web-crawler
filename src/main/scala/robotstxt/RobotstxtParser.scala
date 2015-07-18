@@ -3,9 +3,21 @@ package robotstxt
 import scala.util.Try
 
 /**
+ * Parses rules from robots.txt files for given `agentName`. If there is a
+ * "User-agent" directive with the given `agentName`, then the directives
+ * specified in that group are parsed. Otherwise, the directives associated with
+ * all user-agents (wildcard `*`) are parsed.
+ *
+ * @param agentName User-agent to search in directives
+ *
  * @author andrei
  */
 final class RobotstxtParser(val agentName: String) {
+  /**
+   * @param content Substring of the robots.txt file that matched all
+   * recognized directives
+   * @return [[RuleSet]] parsed from `content`
+   */
   private def getRulesFromDirectives(content: String): RuleSet = {
     val directiveRegex = RobotstxtParser.directive.r
     val directives = directiveRegex.findAllIn(content).toSeq.flatMap({
@@ -23,6 +35,11 @@ final class RobotstxtParser(val agentName: String) {
     RuleSet(allow, disallow, crawlDelay.getOrElse(0.0))
   }
 
+  /**
+   * @param userAgent User-agent of the crawler to search in the robots.txt file
+   * @param content Sanitized content of the robots.txt file (without comments)
+   * @return Parsed [[RuleSet]] from `content`
+   */
   private def getRulesForUserAgent(
       userAgent: String,
       content: String): Option[RuleSet] = RobotstxtParser
@@ -31,6 +48,11 @@ final class RobotstxtParser(val agentName: String) {
     .flatMap(g => g.headOption)
     .map(getRulesFromDirectives)
 
+  /**
+   * @param rawContent Content of the robots.txt file converted to a UTF-8
+   * encoded string from a byte array
+   * @return Parsed [[RuleSet]] from given robots.txt
+   */
   def getRules(rawContent: String): RuleSet = {
     val content = rawContent.replaceAll(RobotstxtParser.comment, "")
     getRulesForUserAgent(agentName, content)
@@ -39,7 +61,15 @@ final class RobotstxtParser(val agentName: String) {
   }
 }
 
+/**
+ * Factory object for [[RobotstxtParser]] class.
+ *
+ * @author andrei
+ */
 object RobotstxtParser {
+  /**
+   * Builds a parser with given `agentName`.
+   */
   def apply(agentName: String) = new RobotstxtParser(agentName)
 
   val comment = """[\s ]#.*+"""
@@ -53,9 +83,15 @@ object RobotstxtParser {
   val directive =
     "(?:\\s(" + supported.mkString("|") + ") *+: *+" + value + " *+)"
 
+  /**
+   * Regex used to match the "User-agent" directive.
+   */
   def userAgentDirective(agentName: String): String =
     userAgent + " *+: *+" + agentName + " *+"
 
+  /**
+   * Regex used to match robots.txt content.
+   */
   def content(agentName: String): String =
     wildcard +
       userAgentDirective(agentName) + "(" + directive + "*+)" +
